@@ -32,9 +32,9 @@ pipeline {
             }
 
          }
-        stage ('Artifactory configuration') {
+               stage ('Artifactory configuration') {
 
-            steps {
+                steps {
 
                 rtServer (
 
@@ -42,27 +42,30 @@ pipeline {
 
                     url: "https://tadadharani.jfrog.io/artifactory",
 
-                //    credentialsId: 'jfrog'
-                   username: 'tada.dharani@hcl.com',
- 				   password: 'Monday$12345'
+                    credentialsId: 'jfrog-cred'
 
                 )
-                
-                rtUpload (
-                    serverId: 'ARTIFACTORY_SERVER1',
-                    specPath: 'target/jpetstore.war',
-                    failNoOp: true,
 
-                    // Optional - Associate the uploaded files with the following custom build name and build number.
-                    // If not set, the files will be associated with the default build name and build number (i.e the
-                    // the Jenkins job name and number).
-                    buildName: 'jpetstore',
-                    buildNumber: '2.0.21'
-                )
+				rtUpload (
+				    serverId: 'ARTIFACTORY_SERVER1',
+				    spec: '''{
+					  "files": [
+					    {
+					      "pattern": "**/*.war",
+					      "target": "tadarepository/"
+					    }
+					 ]
+				    }''',
+				    buildName: "${BUILD_ID}",
+				    buildNumber: "${BUILD_NUMBER}"
+				)
+
 
             }
 
         }
+   
+
         stage ('sonar') {
 
             steps {
@@ -74,7 +77,17 @@ pipeline {
 
          }     
         
-        
+        stage ('Deploy'){
+		    steps{
+		    
+		        deploy adapters: [tomcat9(url: 'http://jenkins-server.eastus.cloudapp.azure.com:8081/', 
+                              credentialsId: 'c934371c-a087-41cb-b347-cf85bf7e40c8')], 
+                     war: '**/*.war',
+                     contextPath: 'jpetstore'
+		    
+		    }
+	    
+	    }
      
         
 
